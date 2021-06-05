@@ -5,6 +5,18 @@
 	<title>Project RED</title>
 </head>
 <body>
-Hello World!!
+Project RED
+<span id="message"></span>
 </body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+	window.addEventListener('DOMContentLoaded', function () {
+		$.ajax({
+			url: "http://mybambi.iptime.org:8080/",
+			success(data) {
+				document.getElementById("message").innerHTML = data;
+			}
+		});
+	});
+</script>
 </html>
