@@ -1,23 +1,96 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-	<meta charset="UTF-8">
-	<title>Project RED</title>
+  <meta charset="UTF-8">
+  <title>Project RED</title>
+  <link rel="shortcut icon" href="img/favicon.png" type="image/x-icon"/>
 </head>
 <body>
-<h1 id="message"></h1>
-<input placeholder="닉네임"/>
-<button>접속</button>
-</body>
+<div style="width: 100%; height: 100%">
+  <h1 id="message"></h1>
+  <div>
+    <label>User UUID is </label>
+    <label id="uuid">not set.</label>
+  </div>
+  <div>
+    <label>User name is </label>
+    <label id="nickname">not set.</label>
+  </div>
+  <div style="width: 500px; height: 300px">
+    <img src="img/pg.gif" alt="main image"/>
+  </div>
+  <div style="width: 500px; height: 100px;">
+    <label>
+      <input placeholder="닉네임" id="newNickname"/>
+    </label>
+    <button id="change-nickname">닉네임 변경</button>
+  </div>
+</div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
-	window.addEventListener('DOMContentLoaded', function () {
-		$.ajax({
-			url: "http://mybambi.iptime.org:8080/",
-			success(data) {
-				document.getElementById("message").innerHTML = data;
-			}
-		});
-	});
+    const UUID_COOKIE_NAME = "x-red-uuid";
+
+    window.addEventListener('DOMContentLoaded', function () {
+        $.ajax({
+            url: "http://mybambi.iptime.org:8080/",
+            success(data) {
+                document.getElementById("message").innerHTML = data;
+            }
+        });
+
+        if (getCookie(UUID_COOKIE_NAME) === null) {
+            $.ajax({
+                url: "http://mybambi.iptime.org:8080/hello",
+                method: "POST",
+                success(data) {
+                    setCookie(UUID_COOKIE_NAME, data.uuid, 1);
+                    document.getElementById("uuid").innerHTML = data.uuid;
+                }
+            });
+        } else {
+            $.ajax({
+                url: "http://mybambi.iptime.org:8080/users/" + getUuid(),
+                method: "GET",
+                success(data) {
+                    document.getElementById("uuid").innerHTML = data.user.uuid;
+                    document.getElementById("nickname").innerHTML = data.user.nickname;
+                }
+            });
+            document.getElementById("uuid").innerHTML = getCookie(UUID_COOKIE_NAME);
+        }
+    });
+
+    document.querySelector('button#change-nickname')
+        .addEventListener('click', event => {
+            $.ajax({
+                url: "http://mybambi.iptime.org:8080/users/" + getUuid() + "/update",
+                method: "POST",
+                contentType: "application/json; charset=UTF-8",
+                data: JSON.stringify({
+                    uuid: getUuid(),
+                    nickname: document.getElementById("newNickname").value
+                }),
+                success(data) {
+                    alert("닉네임 변경 완료.");
+                    document.getElementById("nickname").innerHTML = data.user.nickname;
+                }
+            });
+        });
+
+    var setCookie = function (name, value, day) {
+        var date = new Date();
+        date.setTime(date.getTime() + day * 60 * 60 * 24 * 1000);
+        document.cookie = name + '=' + value + ';expires=' + date.toUTCString() + ';path=/';
+    };
+
+    var getCookie = function (name) {
+        var value = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+        return value ? value[2] : null;
+    };
+
+    var getUuid = function () {
+        return getCookie(UUID_COOKIE_NAME);
+    }
 </script>
+</body>
 </html>
